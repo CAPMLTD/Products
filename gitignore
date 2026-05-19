@@ -1,0 +1,19 @@
+# Streamlit secrets (never commit your API key)
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Outputs
+*.docx
+*.pdf
