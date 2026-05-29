@@ -23,16 +23,21 @@ CH_BASE = "https://api.company-information.service.gov.uk"
 
 AI_SIC_CODES = {
     "62012", "62020", "62090", "63110", "63120",
-    "58290", "72190", "62011", "47910", "47990"
+    "58290", "72190", "62011", "47910", "47990",
+    "62010", "62030", "63990", "74909", "72110",
+    "72200", "70229", "82990", "58210", "58190"
 }
 RETAIL_SIC_CODES = {
     "47190", "47910", "47990", "47410", "47610",
-    "56302", "47710", "47210", "47110"
+    "56302", "47710", "47210", "47110", "47910",
+    "46900", "46690", "47910", "47990", "53202"
 }
 AI_KEYWORDS = [
     "ai", "artificial intelligence", "machine learning", "computer vision",
     "deep learning", "automation", "data analytics", "predictive",
-    "generative", "llm", "nlp", "retail tech", "vision ai", "loss prevention"
+    "generative", "llm", "nlp", "retail tech", "vision ai", "loss prevention",
+    "data", "tech", "digital", "software", "platform", "smart", "intelligent",
+    "analytics", "insight", "cloud", "saas", "neural", "robotics"
 ]
 
 CONTRACTOR_PROFILE = """
@@ -90,7 +95,8 @@ def is_relevant(company: dict) -> bool:
     sics = set(company.get("sic_codes") or [])
     name_hit = any(kw in name for kw in AI_KEYWORDS)
     sic_hit = bool(sics & AI_SIC_CODES) or bool(sics & RETAIL_SIC_CODES)
-    return name_hit or sic_hit
+    no_sic = len(sics) == 0
+    return name_hit or sic_hit or no_sic
 
 
 def score_company(anthropic_key: str, company: dict) -> dict:
