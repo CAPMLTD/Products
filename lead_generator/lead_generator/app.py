@@ -135,8 +135,9 @@ Reply ONLY with valid JSON, no markdown:
         raw = message.content[0].text.strip()
         raw = raw.replace("```json", "").replace("```", "").strip()
         return json.loads(raw)
-    except Exception:
-        return {"score": 0, "reason": "Could not score.", "tags": [], "fit_summary": ""}
+    except Exception as e:
+        st.warning(f"Scoring error for {company.get('company_name')}: {str(e)}")
+        return {"score": 0, "reason": f"Error: {str(e)}", "tags": [], "fit_summary": ""}
 
 
 def company_age_label(date_str: str) -> str:
@@ -147,7 +148,7 @@ def company_age_label(date_str: str) -> str:
         if years < 1:
             return "< 1 yr old"
         return f"{int(years)} yr{'s' if int(years) != 1 else ''} old"
-    except Exception:
+    except Exception as e:
         return ""
 
 
@@ -222,6 +223,14 @@ st.caption("Finds early-stage UK AI companies on Companies House, then scores ea
 if run:
     if not ch_key or not anthropic_key:
         st.error("Please enter both API keys in the sidebar.")
+        st.stop()
+
+    # Test Anthropic key first
+    try:
+        test_client = anthropic.Anthropic(api_key=anthropic_key)
+        test_client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=10, messages=[{"role": "user", "content": "hi"}])
+    except Exception as e:
+        st.error(f"Anthropic API key error: {str(e)}")
         st.stop()
 
     from_date = build_date_from(max_age)
