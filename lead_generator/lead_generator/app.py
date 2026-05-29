@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import anthropic
 import json
+import csv
+import io
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -152,6 +154,42 @@ def company_age_label(date_str: str) -> str:
         return ""
 
 
+
+
+def build_csv(scored: list) -> str:
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Rank", "Score", "Company Name", "Fit Summary", "AI Reason",
+        "Tags", "Incorporated", "Age", "Company Number",
+        "Address", "SIC Codes", "Companies House URL", "LinkedIn URL"
+    ])
+    for i, s in enumerate(scored):
+        c = s["company"]
+        ai = s["ai"]
+        address = ", ".join(
+            v for v in (c.get("registered_office_address") or {}).values()
+            if v and isinstance(v, str)
+        )
+        ch_url = f"https://find-and-update.company-information.service.gov.uk/company/{c.get('company_number')}"
+        li_url = f"https://www.linkedin.com/search/results/companies/?keywords={c.get('company_name','')}"
+        writer.writerow([
+            i + 1,
+            ai.get("score", 0),
+            c.get("company_name", ""),
+            ai.get("fit_summary", ""),
+            ai.get("reason", ""),
+            ", ".join(ai.get("tags", [])),
+            c.get("date_of_creation", ""),
+            company_age_label(c.get("date_of_creation", "")),
+            c.get("company_number", ""),
+            address,
+            ", ".join(c.get("sic_codes") or []),
+            ch_url,
+            li_url,
+        ])
+    return output.getvalue()
+
 def render_result(i: int, company: dict, ai: dict):
     score = ai.get("score", 0)
     if score >= 70:
@@ -282,6 +320,16 @@ if run:
     m2.metric("After relevance filter", len(filtered))
     m3.metric("Strong fit (70+)", top)
     m4.metric("Worth exploring (40–69)", mid)
+
+
+    # ── CSV Export ───────────────────────────────────────────────────────────
+    csv_data = build_csv(scored)
+    st.download_button(
+        label="⬇️ Download results as CSV",
+        data=csv_data,
+        file_name=f"leads_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+        mime="text/csv",
+    )
 
     st.divider()
 
